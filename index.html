@@ -226,40 +226,80 @@ function generateGeldLeicht(){
 
 function generateGeldSchwer(){
 
-  let level=getRandomLevel();
+  let level = getRandomLevel();
 
-  if(level===1){
-    let a=randomMoney(40);
-    let b=randomMoney(40);
-    correctAnswer=a+b;
+  // Hilfsfunktion: glatter Eurobetrag
+  function randomEuro(max){
+    return (Math.floor(Math.random()*max)+1) * 100;
+  }
+
+  // Hilfsfunktion: Betrag mit 10-Cent-Schritten
+  function randomEuroWithCent(max){
+    let euro = Math.floor(Math.random()*max)+1;
+    let cent = Math.floor(Math.random()*10)*10;
+    return euro*100 + cent;
+  }
+
+  // LEVEL 1 – einfache Addition, nur eine Zahl mit Cent
+  if(level === 1){
+
+    let a = randomEuroWithCent(40);
+    let b = randomEuro(40);
+
+    correctAnswer = a + b;
     return `${randomMoneyFormat(a)} + ${randomMoneyFormat(b)}`;
   }
 
-  if(level===2){
-    let a=randomMoney(80);
-    let b=randomMoney(80);
-    let op=Math.random()<0.5?"+":"-";
-    if(op==="-"&&b>a){[a,b]=[b,a];}
-    correctAnswer=op==="+"?a+b:a-b;
+  // LEVEL 2 – + oder -, nur eine Zahl mit Cent
+  if(level === 2){
+
+    let withCent = randomEuroWithCent(80);
+    let wholeEuro = randomEuro(80);
+
+    let op = Math.random() < 0.5 ? "+" : "-";
+
+    let a = withCent;
+    let b = wholeEuro;
+
+    if(op === "-" && b > a){
+      [a,b] = [b,a];
+    }
+
+    correctAnswer = op === "+" ? a + b : a - b;
+
     return `${randomMoneyFormat(a)} ${op} ${randomMoneyFormat(b)}`;
   }
 
-  if(level===3){
-    if(Math.random()<0.75){
-      let a=randomMoney(100);
-      let b=randomMoney(100);
-      let op=Math.random()<0.5?"+":"-";
-      if(op==="-"&&b>a){[a,b]=[b,a];}
-      correctAnswer=op==="+"?a+b:a-b;
+  // LEVEL 3 – bis 100 €, gelegentlich ·2
+  if(level === 3){
+
+    if(Math.random() < 0.75){
+
+      let withCent = randomEuroWithCent(100);
+      let wholeEuro = randomEuro(100);
+
+      let op = Math.random() < 0.5 ? "+" : "-";
+
+      let a = withCent;
+      let b = wholeEuro;
+
+      if(op === "-" && b > a){
+        [a,b] = [b,a];
+      }
+
+      correctAnswer = op === "+" ? a + b : a - b;
+
       return `${randomMoneyFormat(a)} ${op} ${randomMoneyFormat(b)}`;
+
     } else {
-      let a=randomMoney(40);
-      correctAnswer=a*2;
+
+      let a = randomEuroWithCent(40);
+      correctAnswer = a * 2;
+
       return `${randomMoneyFormat(a)} · 2`;
     }
   }
 }
-
 function nextTask(){
 
   if(currentTask>=totalTasks){ endRound(); return; }
