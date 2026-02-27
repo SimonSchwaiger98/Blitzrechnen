@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Blitzrechnen</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+body {
+  font-family: sans-serif;
+  background: #d1dbe2;
+  text-align: center;
+  padding: 20px;
+}
+h1 {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 64px;
+}
+#taskDisplay {
+  font-size: 64px;
+  margin: 100px auto;
+  height: 100px;
+  width: fit-content;
+  padding: 20px 40px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+button {
+  font-size: 16px;
+  margin: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+.duration-btns button.active {
+  background-color: #4285f4;
+  color: white;
+}
+input {
+  font-size: 24px;
+  padding: 10px;
+  width: 170px;
+  text-align: center;
+  border-radius: 8px;
+  border: 2px solid #ccc;
+  background-color: #dff5e1; /* pastellgrün */
+}
+input.wrong {
+  background-color: #f8d7da; /* pastellrot */
+}
+#summary {
+  display: none;
+  font-size: 24px;
+}
+#perfectImg {
+  display: none;
+  width: 150px;
+  margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>⚡ Blitzrechnen ⚡</h1>
+
+<div id="modeSelection">
+  <button onclick="setMode('kopf')">🧠 Im Kopf bis 100</button>
+  <button onclick="setMode('einmaleins')">🔢 Einmaleins</button>
+  <button onclick="setMode('geldLeicht')">💰 Geld leicht</button>
+  <button onclick="setMode('geldSchwer')">💶 Geld schwierig</button>
+</div>
+
+<div class="duration-btns">
+  Anzeigezeit:
+  <button onclick="setDuration(1000)">🚀</button>
+  <button onclick="setDuration(2000)" class="active">🐇</button>
+  <button onclick="setDuration(3000)">🐢</button>
+</div>
+
+<div id="taskDisplay">Bitte Modus wählen</div>
+
+<div>
+  <label style="font-size:20px;">Lösung: </label>
+  <input type="text" id="answerInput" disabled>
+  <button onclick="checkAnswer()">Prüfen</button>
+  <button onclick="repeatTask()">🔁 Wiederholen</button>
+</div>
+
+<div id="stats">0 von 10 richtig</div>
+
+<div id="summary">
+  <p id="finalMessage"></p>
+  <img id="perfectImg" src="tiger pokal.png">
+</div>
+
+<script>
+let displayDuration = 2000;
+let totalTasks = 10;
+let currentTask = 0;
+let correctCount = 0;
+let correctAnswer = null;
+let currentMode = null;
+let currentTaskText = "";
+let showing = false;
+
+function setDuration(ms){
+  displayDuration = ms;
+  document.querySelectorAll('.duration-btns button')
+    .forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function setMode(mode){
+  currentMode = mode;
+  document.getElementById("modeSelection").style.display="none";
+  startRound();
+}
+
+function startRound(){
+  currentTask = 0;
+  correctCount = 0;
+  document.getElementById("summary").style.display="none";
+  document.getElementById("perfectImg").style.display="none";
+  updateStats();
+  showCountdown();
+}
+
+function showCountdown(){
+  let count = 3;
+  const display = document.getElementById("taskDisplay");
+  const interval = setInterval(()=>{
+    display.textContent = count;
+    count--;
+    if(count<0){
+      clearInterval(interval);
+      nextTask();
+    }
+  },1000);
+}
+
+function nextTask(){
+  if(currentTask >= totalTasks){
+    endRound();
+    return;
+  }
+
+  const input = document.getElementById("answerInput");
+  input.value="";
+  input.disabled=true;
+  input.classList.remove("wrong");
+
+  currentTaskText = generateTask();
+  document.getElementById("taskDisplay").textContent=currentTaskText;
+  showing=true;
+
+  setTimeout(()=>{
+    document.getElementById("taskDisplay").textContent="";
+    showing=false;
+    input.disabled=false;
+    input.focus();
+  }, displayDuration);
+}
+
+function generateTask(){
+  switch(currentMode){
+    case "kopf": return generateKopf();
+    case "einmaleins": return generateEinmaleins();
+    case "geldLeicht": return generateGeldLeicht();
+    case "geldSchwer": return generateGeldSchwer();
+  }
+}
+
+function generateKopf(){
+  let a = Math.floor(Math.random()*100)+1;
+  let b = Math.floor(Math.random()*100)+1;
+  let op = Math.random()<0.5 ? "+" : "-";
+  if(op==="-" && b>a){ [a,b]=[b,a]; }
+  correctAnswer = op==="+" ? a+b : a-b;
+  return `${a} ${op} ${b}`;
+}
+
+function generateEinmaleins(){
+  let a = Math.floor(Math.random()*10)+1;
+  let b = Math.floor(Math.random()*10)+1;
+  correctAnswer = a*b;
+  return `${a} × ${b}`;
+}
+
+function generateGeldLeicht(){
+  let euro = Math.floor(Math.random()*9)+1;
+  let cent = (Math.floor(Math.random()*9)+1)*10;
+  let op = Math.random()<0.5 ? "+" : "-";
+  let a = euro*100;
+  let b = cent;
+  if(op==="-" && b>a){ op="+"; }
+  correctAnswer = op==="+" ? a+b : a-b;
+  return `${formatMoney(a)} ${op} ${formatMoney(b)}`;
+}
+
+function generateGeldSchwer(){
+  let type = Math.floor(Math.random()*3);
+  if(type===0){
+    let a = randomMoney(5000);
+    let b = randomMoney(5000);
+    correctAnswer = a+b;
+    return `${formatMoney(a)} + ${formatMoney(b)}`;
+  }
+  if(type===1){
+    let a = randomMoney(2000);
+    let factor = Math.floor(Math.random()*9)+2;
+    correctAnswer = a*factor;
+    return `${formatMoney(a)} × ${factor}`;
+  }
+  if(type===2){
+    let b = Math.floor(Math.random()*9)+2;
+    let result = randomMoney(2000);
+    let a = result*b;
+    correctAnswer = result;
+    return `${formatMoney(a)} ÷ ${b}`;
+  }
+}
+
+function randomMoney(max){
+  return Math.floor(Math.random()*max/10)*10;
+}
+
+function formatMoney(cents){
+  return (cents/100).toFixed(2).replace(".",",")+" €";
+}
+
+function repeatTask(){
+  if(showing) return;
+  document.getElementById("taskDisplay").textContent=currentTaskText;
+  setTimeout(()=>{
+    document.getElementById("taskDisplay").textContent="";
+  }, displayDuration);
+}
+
+document.getElementById("answerInput").addEventListener("keydown", function(e){
+  if(e.key==="Enter") checkAnswer();
+});
+
+function checkAnswer(){
+  const input = document.getElementById("answerInput");
+  let raw = input.value.replace(",",".").replace("€","");
+  let value = parseFloat(raw);
+
+  if(currentMode.includes("geld")){
+    value = Math.round(value*100);
+  } else {
+    value = parseInt(value);
+  }
+
+  if(value===correctAnswer){
+    correctCount++;
+    input.classList.remove("wrong");
+  } else {
+    input.value = currentMode.includes("geld")
+      ? formatMoney(correctAnswer)
+      : correctAnswer;
+    input.classList.add("wrong");
+  }
+
+  currentTask++;
+  updateStats();
+
+  setTimeout(()=>nextTask(),1200);
+}
+
+function updateStats(){
+  document.getElementById("stats").textContent =
+    `${correctCount} von ${totalTasks} richtig`;
+}
+
+function endRound(){
+  document.getElementById("taskDisplay").textContent="";
+  document.getElementById("summary").style.display="block";
+  document.getElementById("finalMessage").textContent =
+    `🎉 Fertig! Du hast ${correctCount} von ${totalTasks} richtig gerechnet.`;
+  if(correctCount===totalTasks){
+    document.getElementById("perfectImg").style.display="block";
+  }
+}
+</script>
+
+</body>
+</html>
