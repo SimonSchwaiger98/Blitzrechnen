@@ -213,7 +213,7 @@ button:hover {
 
 <div>
   <label style="font-size:20px;">Lösung: </label>
-<input type="text" id="answerInput" inputmode="decimal" readonly>
+<input type="text" id="answerInput" inputmode="decimal">
 
   <span id="unitSelection" style="display:none;">
     <button class="toggle-btn active" id="euroBtn" onclick="setUnit('euro')">Euro</button>
@@ -690,15 +690,17 @@ function positionSystemMarker(){
 
   marker.style.left = (center - marker.offsetWidth / 2) + "px";
 }
-  // Tablet-Erkennung
-function isTouchDevice() {
-  return ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-}
-
-// Tastatur nur bei Tablet anzeigen
 window.addEventListener("load", function(){
-  if(isTouchDevice()){
+
+  const input = document.getElementById("answerInput");
+
+  if(('ontouchstart' in window) || navigator.maxTouchPoints > 0){
+    // Tablet
     document.getElementById("tabletKeyboard").style.display = "block";
+    input.setAttribute("readonly", true);
+  } else {
+    // Desktop
+    input.removeAttribute("readonly");
   }
 });
 
