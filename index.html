@@ -277,6 +277,7 @@ let selfRating = null;
 let totalTasks = 10;
 let currentTask = 0;
 let correctCount = 0;
+let roundActive = false;
 let correctAnswer = null;
 let currentMode = null;
 let currentTaskText = "";
@@ -323,6 +324,7 @@ function setUnit(unit){
 }
 
 function startRound(){
+  roundActive = true;
   currentTask=0;
   correctCount=0;
   wrongStreak=0;
@@ -590,7 +592,7 @@ function nextTask(){
 }
 
 function checkAnswer(){
-
+  if(!roundActive) return;
   let raw=document.getElementById("answerInput").value.replace(",",".");
   let value=parseFloat(raw);
 
@@ -637,6 +639,7 @@ function repeatTask(){
 }
 
 function endRound(){
+  roundActive = false;
   document.getElementById("summary").style.display="block";
   document.getElementById("finalMessage").textContent=
     `🎉 Fertig! Du hast ${correctCount} von ${totalTasks} richtig gerechnet.`;
