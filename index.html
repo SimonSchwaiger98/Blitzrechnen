@@ -196,6 +196,7 @@ button:hover {
 <div id="modeSelection">
   <button onclick="setMode('kopf')">🧠 Im Kopf bis 100</button>
   <button onclick="setMode('einmaleins')">🔢 Einmaleins</button>
+  <button onclick="setMode('subKopf')">➖ Subtrahieren im Kopf</button>
   <button onclick="setMode('geldLeicht')">💰 Geld leicht</button>
   <button onclick="setMode('geldSchwer')">💶 Geld schwierig</button>
 </div>
@@ -379,6 +380,7 @@ function generateTask(){
   switch(currentMode){
     case "kopf": return generateKopf();
     case "einmaleins": return generateEinmaleins();
+    case "subKopf": return generateSubKopf();
     case "geldLeicht": return generateGeldLeicht();
     case "geldSchwer": return generateGeldSchwer();
   }
@@ -561,6 +563,38 @@ function generateGeldSchwer(){
       return `${randomMoneyFormat(a)} · 2`;
     }
   }
+}
+  function generateSubKopf(){
+
+  let level = getRandomLevel();
+
+  // 70% Zahlenraum bis 20
+  let max = Math.random() < 0.7 ? 20 : 100;
+
+  let a = Math.floor(Math.random()*max) + 5;
+  let b = Math.floor(Math.random()*9) + 1; // immer einstellig
+
+  // Manchmal zweifache Subtraktion
+  if(level >= 2 && Math.random() < 0.4){
+
+    let c = Math.floor(Math.random()*9) + 1;
+
+    // Sicherstellen, dass nichts negativ wird
+    if(a - b - c < 0){
+      a = b + c + Math.floor(Math.random()*10);
+    }
+
+    correctAnswer = a - b - c;
+    return `${a} - ${b} - ${c}`;
+  }
+
+  // einfache Subtraktion
+  if(a - b < 0){
+    a = b + Math.floor(Math.random()*10);
+  }
+
+  correctAnswer = a - b;
+  return `${a} - ${b}`;
 }
 function nextTask(){
 
