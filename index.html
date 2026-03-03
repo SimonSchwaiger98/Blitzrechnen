@@ -217,12 +217,7 @@ button:hover {
   <label style="font-size:20px;">Lösung: </label>
 <input type="text" id="answerInput" inputmode="decimal">
 
-  <span id="restField" style="display:none;">
-  Rest:
-  <input type="text" id="restInput" style="width:80px;">
-</span>
-  
-  <span id="unitSelection" style="display:none;">
+     <span id="unitSelection" style="display:none;">
     <button class="toggle-btn active" id="euroBtn" onclick="setUnit('euro')">Euro</button>
     <button class="toggle-btn" id="centBtn" onclick="setUnit('cent')">Cent</button>
   </span>
@@ -249,6 +244,7 @@ button:hover {
     <button onclick="pressKey('0')">0</button>
     <button onclick="pressKey(',')">,</button>
     <button onclick="deleteKey()">⌫</button>
+    <button id="rKey" onclick="pressKey('R')" style="display:none;">R</button>
   </div>
   <div class="keyboard-row">
     <button class="enter-btn" onclick="checkAnswer()">✔</button>
@@ -293,7 +289,8 @@ let displayDuration = 1500;
 let allowedLevels = [1,2,3];
 let wrongStreak = 0;
 let usedTasks = new Set();
-let correctRemainder = 0;
+let correctDivisionRemainder = 0;
+
 
 function setDuration(ms,btn){
   displayDuration = ms;
@@ -313,9 +310,9 @@ function setMode(mode){
     document.getElementById("unitSelection").style.display="none";
   }
   if(mode === "division"){
-  document.getElementById("restField").style.display = "inline";
+  document.getElementById("rKey").style.display = "inline-block";
 } else {
-  document.getElementById("restField").style.display = "none";
+  document.getElementById("rKey").style.display = "none";
 }
 
   startRound();
@@ -627,11 +624,10 @@ function generateDivision(){
   }
 
   correctAnswer = quotient;
-  correctRemainder = remainder;
+  correctDivisionRemainder = remainder;
 
   return `${dividend} : ${divisor}`;
 }
-
 function nextTask(){
 
   if(currentTask>=totalTasks){ endRound(); return; }
@@ -663,11 +659,7 @@ function nextTask(){
 
 function checkAnswer(){
   if(!roundActive) return;
-  let restValue = 0;
-if(currentMode === "division"){
-  let rawRest = document.getElementById("restInput").value;
-  restValue = rawRest === "" ? 0 : parseInt(rawRest);
-}
+
   let raw=document.getElementById("answerInput").value.replace(",",".");
   let value=parseFloat(raw);
 
@@ -677,13 +669,7 @@ if(currentMode === "division"){
     value=parseInt(value);
   }
 
-if(
-  (currentMode !== "division" && value === correctAnswer)
-  ||
-  (currentMode === "division" &&
-   value === correctAnswer &&
-   restValue === correctRemainder)
-){
+if(checkDivisionAnswer(value)){
     correctCount++;
     wrongStreak=0;
     document.getElementById("taskDisplay").textContent="Richtig! ✅";
@@ -694,7 +680,16 @@ if(
       document.getElementById("answerInput").value=
         answerUnit==="euro"?formatMoney(correctAnswer):correctAnswer+" ct";
     }else{
-      document.getElementById("answerInput").value=correctAnswer;
+  if(currentMode === "division"){
+  if(correctDivisionRemainder === 0){
+    document.getElementById("answerInput").value = correctAnswer;
+  } else {
+    document.getElementById("answerInput").value =
+      correctAnswer + " R " + correctDivisionRemainder;
+  }
+} else {
+  document.getElementById("answerInput").value = correctAnswer;
+}
     }
 
     document.getElementById("answerInput").classList.add("wrong");
@@ -814,6 +809,39 @@ document.addEventListener("keydown", function(e){
     }
   }
 });
+  function checkDivisionAnswer(value){
+
+  if(currentMode !== "division"){
+    return value === correctAnswer;
+  }
+
+  let inputRaw = document.getElementById("answerInput").value
+                  .replace(/\s+/g, "")
+                  .toUpperCase();
+
+  // Nur Zahl eingegeben (z.B. "9")
+  if(!inputRaw.includes("R")){
+    return (
+      correctDivisionRemainder === 0 &&
+      parseInt(inputRaw) === correctAnswer
+    );
+  }
+
+  // Format "7R6"
+  let parts = inputRaw.split("R");
+
+  let resultPart = parseInt(parts[0]);
+  let remainderPart = parseInt(parts[1]);
+
+  if(isNaN(resultPart)) return false;
+
+  if(isNaN(remainderPart)) remainderPart = 0;
+
+  return (
+    resultPart === correctAnswer &&
+    remainderPart === correctDivisionRemainder
+  );
+}
 </script>
 </body>
 </html>
