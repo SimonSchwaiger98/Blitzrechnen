@@ -197,6 +197,7 @@ button:hover {
   <button onclick="setMode('kopf')">🧠 Im Kopf bis 100</button>
   <button onclick="setMode('einmaleins')">🔢 Einmaleins</button>
   <button onclick="setMode('subKopf')">➖ Subtrahieren im Kopf</button>
+  <button onclick="setMode('division')">➗ Dividieren</button>
   <button onclick="setMode('geldLeicht')">💰 Geld leicht</button>
   <button onclick="setMode('geldSchwer')">💶 Geld schwierig</button>
 </div>
@@ -216,6 +217,11 @@ button:hover {
   <label style="font-size:20px;">Lösung: </label>
 <input type="text" id="answerInput" inputmode="decimal">
 
+  <span id="restField" style="display:none;">
+  Rest:
+  <input type="text" id="restInput" style="width:80px;">
+</span>
+  
   <span id="unitSelection" style="display:none;">
     <button class="toggle-btn active" id="euroBtn" onclick="setUnit('euro')">Euro</button>
     <button class="toggle-btn" id="centBtn" onclick="setUnit('cent')">Cent</button>
@@ -284,10 +290,10 @@ let currentMode = null;
 let currentTaskText = "";
 let answerUnit = "euro";
 let displayDuration = 1500;
-
 let allowedLevels = [1,2,3];
 let wrongStreak = 0;
 let usedTasks = new Set();
+let correctRemainder = 0;
 
 function setDuration(ms,btn){
   displayDuration = ms;
@@ -306,6 +312,11 @@ function setMode(mode){
   } else {
     document.getElementById("unitSelection").style.display="none";
   }
+  if(mode === "division"){
+  document.getElementById("restField").style.display = "inline";
+} else {
+  document.getElementById("restField").style.display = "none";
+}
 
   startRound();
 }
@@ -381,6 +392,7 @@ function generateTask(){
     case "kopf": return generateKopf();
     case "einmaleins": return generateEinmaleins();
     case "subKopf": return generateSubKopf();
+    case "division": return generateDivision();
     case "geldLeicht": return generateGeldLeicht();
     case "geldSchwer": return generateGeldSchwer();
   }
@@ -596,6 +608,30 @@ function generateGeldSchwer(){
   correctAnswer = a - b;
   return `${a} - ${b}`;
 }
+function generateDivision(){
+
+  let divisor = Math.floor(Math.random()*8) + 2; // 2–9
+  let quotient = Math.floor(Math.random()*9) + 1; // Ergebnis einstellig
+
+  let hasRemainder = Math.random() < 0.5;
+
+  let dividend;
+  let remainder = 0;
+
+  if(hasRemainder){
+    remainder = Math.floor(Math.random()*divisor);
+    if(remainder === 0) remainder = 1;
+    dividend = divisor * quotient + remainder;
+  } else {
+    dividend = divisor * quotient;
+  }
+
+  correctAnswer = quotient;
+  correctRemainder = remainder;
+
+  return `${dividend} : ${divisor}`;
+}
+
 function nextTask(){
 
   if(currentTask>=totalTasks){ endRound(); return; }
@@ -627,6 +663,11 @@ function nextTask(){
 
 function checkAnswer(){
   if(!roundActive) return;
+  let restValue = 0;
+if(currentMode === "division"){
+  let rawRest = document.getElementById("restInput").value;
+  restValue = rawRest === "" ? 0 : parseInt(rawRest);
+}
   let raw=document.getElementById("answerInput").value.replace(",",".");
   let value=parseFloat(raw);
 
@@ -636,7 +677,13 @@ function checkAnswer(){
     value=parseInt(value);
   }
 
-  if(value===correctAnswer){
+if(
+  (currentMode !== "division" && value === correctAnswer)
+  ||
+  (currentMode === "division" &&
+   value === correctAnswer &&
+   restValue === correctRemainder)
+){
     correctCount++;
     wrongStreak=0;
     document.getElementById("taskDisplay").textContent="Richtig! ✅";
